@@ -281,7 +281,7 @@ class Enemy(Actor):
 
     def collision_reaction(self, actor):
         if actor.vel.norm() > 1:
-            self.is_stuck = True
+            ...#self.is_stuck = True
         
         # Repulsion
         diff = (actor.pos - self.pos).normalized()
