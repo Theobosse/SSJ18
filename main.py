@@ -1,6 +1,6 @@
 # 
 # Untitled Space Score Jam 18 Game
-# By Arkanyota, Gousporu, Theobosse & Yolwoocle
+# By Arkanyota, Gouspourd, Theobosse & Yolwoocle
 #  
 
 from telnetlib import theNULL
@@ -179,7 +179,7 @@ class Player(Actor):
     def do_magnetism(self):
         self.is_active = keydown(pygame.K_RSHIFT)
         #if self.is_active :
-        #    Globals.GAME.new_actor(Magnetic_field(self.pos.x, self.pos.y, "-", 200))
+        #    Globals.GAME.new_actor(MagneticField(self.pos.x, self.pos.y, "-", 200))
 
     def jump(self):
         if self.jump_nb > 0:
@@ -188,7 +188,7 @@ class Player(Actor):
             self.state = "Jumping"
 
 
-class Magnetic_field:
+class MagneticField:
     def __init__(self, x=0, y=0, strength=5, pole="+", radius=100):
         self.pos = Vect2(x, y)
         self.strength = strength
@@ -222,11 +222,13 @@ class Enemy(Actor):
         self.is_magnetic = True
         self.pole = "+"
         self.frition = .99
+        self.radius = 32
 
     def update(self):
         super().update()
         self.do_magnetism()
         self.do_stuck()
+        self.do_collision()
 
     def draw(self, screen):
         image = pygame.transform.flip(self.image, False, False)
@@ -251,7 +253,7 @@ class Enemy(Actor):
 
         # Stuck if player active and close enough
         if player.is_active:
-            if dist < 32:
+            if dist < self.radius:
                 self.is_stuck = True
         else:
             self.is_stuck = False
@@ -263,10 +265,14 @@ class Enemy(Actor):
             if old_stuck:
                 self.vel = player.dir * 60
     
-    def do_damage(self):
-        for a in Globals.GAME.actors:
-            if type(a) == Enemy:
-                ...
+    def do_collision(self):
+        for actor in Globals.GAME.actors:
+            if type(actor) == Enemy:
+                dist = self.pos.dist(actor.pos)
+                if dist <= self.radius + actor.radius:
+                    diff = (actor.pos - self.pos).normalized()
+                    self.vel += -diff * 3
+                    actor.vel += diff * 3
 
 class Game:
     def __init__(self):
@@ -274,8 +280,8 @@ class Game:
         self.actors = []
         self.map = pygame.sprite.Group()
 
-        self.new_actor(Magnetic_field(300, 300, 3, "+", 100))
-        self.new_actor(Magnetic_field(600, 200, 3, "-", 100))
+        self.new_actor(MagneticField(300, 300, 3, "+", 100))
+        self.new_actor(MagneticField(600, 200, 3, "-", 100))
         self.new_actor(self.player)
         self.new_actor(Enemy(50, 50))
         self.new_actor(Enemy(400, 50))
