@@ -83,8 +83,8 @@ class Player(Sprite):
             self.jump_nb = self.max_jump_nb
 
     def draw(self, surface: pygame.surface.Surface):
-        pygame.transform.flip(self.image, self.flip_x, False)
-        surface.blit(self.image, self.pos.tuple())
+        image = pygame.transform.flip(self.image, self.flip_x, False)
+        surface.blit(image, self.pos.tuple())
 
     def movement(self):
         dir = Vect2(0, 0)
@@ -112,6 +112,13 @@ class Player(Sprite):
         if self.pos.y > Globals.window_height - self.h:
             self.vel.y -= self.vel.y
             self.state = "Grounded"
+
+
+class Enemy(Sprite):
+    def __init__(self, pos: tuple, name: str = ''):
+        super().__init__(image, pos, name)
+        self.image = image('can', (64, 64))
+
 
 
 class Game:
