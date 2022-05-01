@@ -6,6 +6,7 @@
 from telnetlib import theNULL
 import pygame
 import math
+import random
 
 from vector import Vect2
 
@@ -167,7 +168,7 @@ class Player(Actor):
         if keydown(pygame.K_DOWN, pygame.K_s):
             dir.y += 1
 
-        if keypressed(pygame.K_SPACE):
+        if keypressed(pygame.K_c):
             self.jump()
 
         dir.normalize()
@@ -177,7 +178,7 @@ class Player(Actor):
             self.dir = Vect2(dir.x, dir.y)
     
     def do_magnetism(self):
-        self.is_active = keydown(pygame.K_RSHIFT)
+        self.is_active = keydown(pygame.K_x)
         #if self.is_active :
         #    Globals.GAME.new_actor(MagneticField(self.pos.x, self.pos.y, "-", 200))
 
@@ -196,12 +197,15 @@ class MagneticField:
         self.is_magnetic = False
         self.pole = pole
 
+        self.is_deleted = False
+
     def update(self):
         # TODO
         for actor in Globals.GAME.actors:
             if math.dist(self.pos.tuple(), actor.pos.tuple()) <= self.radius:
                 if actor.is_magnetic:
-                    actor.vel += (actor.pos - self.pos).normalized() * self.strength * (
+                    diff = (actor.pos - self.pos).normalized()
+                    actor.vel += diff * self.strength * (
                                 (self.pole != actor.pole) * 2 - 1)
 
     def draw(self, surface: pygame.surface.Surface):
@@ -274,14 +278,16 @@ class Enemy(Actor):
     
     def enemy_collision(self):
         for actor in Globals.GAME.actors:
-            if type(actor) == Enemy:
+            if type(actor) == Enemy and actor != self:
                 dist = self.pos.dist(actor.pos)
                 if dist <= self.radius + actor.radius:
                     self.collision_reaction(actor)
 
     def collision_reaction(self, actor):
-        if actor.vel.norm() > 1:
-            ...#self.is_stuck = True
+        are_not_stuck = not actor.is_stuck and not self.is_stuck
+        if actor.vel.norm() > 10 and are_not_stuck:
+            ...#self.is_deleted = True
+            #actor.is_deleted = True
         
         # Repulsion
         diff = (actor.pos - self.pos).normalized()
@@ -290,14 +296,13 @@ class Enemy(Actor):
 
 
 class Game:
-    def __init__(self):
+    def __init__(self, window_width, window_height):
         self.player = Player()
         self.actors = []
         self.map = pygame.sprite.Group()
-
-
-        self.new_actor(MagneticField(300, 300, 3, "+", 100))
-        self.new_actor(MagneticField(600, 200, 3, "-", 100))
+        
+        self.window_width = window_width
+        self.window_height = window_height
 
         self.new_wall(400, 500, 100, 100, Colors.GREEN)
         self.new_wall(200, 400, 100, 100, Colors.GREEN)
@@ -306,11 +311,16 @@ class Game:
         self.new_wall(600, 400, 100, 100, Colors.GREEN)
         self.new_wall(450, 200, 100, 100, Colors.GREEN)
 
+        self.new_actor(MagneticField(300, 300, 3, "+", 100))
+        self.new_actor(MagneticField(600, 200, 3, "-", 100))
         self.new_actor(MagneticField(800, 500, 3, "-", 100))
         self.new_actor(MagneticField(1100, 0, 3, "+", 400))
         
         self.new_actor(self.player)
-        self.new_actor(Enemy(50, 50))
+        for i in range(10):
+            x = random.randint(0, self.window_width)
+            y = random.randint(0, self.window_height)
+            self.new_actor(Enemy(x, y))
         self.new_actor(Enemy(400, 50))
 
     def update(self, screen):
@@ -319,6 +329,10 @@ class Game:
         screen.blit(Fonts.TITLE.render("Hello", True, Colors.BLUE), (10, 10))
         for a in self.actors:
             a.update()
+        for a in self.actors:
+            if a.is_deleted:
+                self.actors.remove(a)
+
         for a in self.actors:
             a.draw(screen)
         self.map.draw(screen)
@@ -336,10 +350,10 @@ class Game:
 
 
 class Globals:
-    window_width = 1366
-    window_height = 768
+    window_width = int(1366 * .75)
+    window_height = int(768 * .75)
 
-    GAME = Game()
+    GAME = Game(window_width, window_height)
     FPS = 60
     frame = 0
 
