@@ -53,6 +53,8 @@ class Player(Sprite):
         self.dir = Vect2(0, 0)
         self.w = 64
         self.h = 64
+
+        self.flip_x = False
         
         self.speed = 0.5
         self.jump_speed = 20
@@ -60,9 +62,6 @@ class Player(Sprite):
 
         self.is_jumping = False
         self.is_falling = False
-
-    def draw(self, surface: pygame.surface.Surface):
-        surface.blit(self.image, self.pos.tuple())
 
     def update(self):
         self.movement()
@@ -72,11 +71,18 @@ class Player(Sprite):
         self.vel.y += self.gravity
         self.collision()
 
+    def draw(self, surface: pygame.surface.Surface):
+        pygame.transform.flip(self.image, self.flip_x, False)
+
+        surface.blit(self.image, self.pos.tuple())
+    
     def movement(self):
         dir = Vect2(0, 0)
         if keydown(pygame.K_LEFT, pygame.K_q):
+            self.flip_x = True
             dir.x -= 1
         if keydown(pygame.K_RIGHT, pygame.K_d):
+            self.flip_x = False
             dir.x += 1
         if keydown(pygame.K_UP, pygame.K_z):
             self.vel.y = -self.jump_speed
