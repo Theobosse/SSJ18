@@ -61,9 +61,11 @@ class Player(Sprite):
         self.w = 64
         self.h = 64
 
+        self.is_magnetic = True
+
         self.flip_x = False
         
-        self.speed = 0.5
+        self.speed = 1
         self.jump_speed = 50
         self.max_jump_nb = 3
         self.jump_nb = self.max_jump_nb
@@ -104,8 +106,8 @@ class Player(Sprite):
         self.dir = self.vel.normalized()
 
     def update_pos(self):
-        self.pos.x += self.vel.x
-        self.pos.y += self.vel.y 
+
+        self.pos += self.vel
     
     def collision(self):
         # Théodore, bonne chance :3
@@ -113,6 +115,22 @@ class Player(Sprite):
             self.vel.y -= self.vel.y
             self.state = "Grounded"
 
+class Magnetic_field:
+    def __init__(self,x = 0 ,y = 0 ,strength = 10 , rayon = 300):
+        self.pos = Vect2(x, y)
+        self.strength = strength
+        self.rayon = rayon
+        self.is_magnetic = False
+        
+    def update(self):
+        #TODO
+        for actor in Globals.GAME.actors:
+            if math.dist(self.pos.tuple(), actor.pos.tuple())<= self.rayon:
+                if actor.is_magnetic:
+                    actor.vel += (actor.pos-self.pos).normalized()*self.strength
+
+    def draw(self, surface: pygame.surface.Surface):
+        pygame.draw.circle(surface,Colors.BLUE,self.pos.tuple() ,self.rayon)
 
 class Enemy(Sprite):
     def __init__(self, pos: tuple, name: str = ''):
@@ -124,7 +142,7 @@ class Enemy(Sprite):
 class Game:
     def __init__(self):
         self.player = Player()
-        self.actors = [self.player]
+        self.actors = [Magnetic_field(300,300),self.player]
 
     # Game.update.getlook.fertilize.elevat.add.divide.getpos.x.world.sup.label.groud.is_maj()
 
@@ -147,6 +165,7 @@ class Globals:
     FPS = 60
     frame = 0
     oldpressed = []
+    magnetic_fields = []
 
 def main():
     pygame.init()
