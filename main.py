@@ -232,7 +232,7 @@ class Enemy(Actor):
         super().update()
         self.do_magnetism()
         self.do_stuck()
-        self.do_collision()
+        self.enemy_collision()
 
     def draw(self, screen):
         image = pygame.transform.flip(self.image, False, False)
@@ -272,14 +272,21 @@ class Enemy(Actor):
                 player.vel -= player.dir * 20
 
     
-    def do_collision(self):
+    def enemy_collision(self):
         for actor in Globals.GAME.actors:
             if type(actor) == Enemy:
                 dist = self.pos.dist(actor.pos)
                 if dist <= self.radius + actor.radius:
-                    diff = (actor.pos - self.pos).normalized()
-                    self.vel += -diff * 3
-                    actor.vel += diff * 3
+                    self.collision_reaction(actor)
+
+    def collision_reaction(self, actor):
+        if actor.vel.norm() > 1:
+            self.is_stuck = True
+        
+        # Repulsion
+        diff = (actor.pos - self.pos).normalized()
+        self.vel += -diff * 3
+        actor.vel += diff * 3
 
 
 class Game:
