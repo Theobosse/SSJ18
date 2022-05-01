@@ -1,3 +1,8 @@
+# 
+# Untitled Space Score Jam 18 Game
+# By Arkanyota, Gousporu, Theobosse & Yolwoocle
+#  
+
 import pygame
 import math
 
@@ -51,9 +56,44 @@ class Fonts:
     TITLE = pygame.font.Font('./resources/fonts/Calibri_Bold.TTF', 64)
 
 
-class Player(Sprite):
+class Actor(Sprite):
+    def __init__(self, image: pygame.surface.Surface, pos: tuple, size: tuple, name: str = ''):
+        super().__init__(image, pos, name)
+        self.pos = Vect2(*pos)
+        self.vel = Vect2()
+        self.gravity = 3
+        self.w = size[0]
+        self.h = size[1]
+        self.state = "Falling"
+        self.flip_x = False
+
+        self.is_magnetic = False
+    
+    def update(self):
+        self.update_pos()
+        self.collision()
+
+    def update_pos(self):
+        self.pos += self.vel
+        self.vel *= .90
+        self.vel.y += self.gravity
+
+    def collision(self):
+        # Théodore, bonne chance :3
+        if self.pos.y > Globals.window_height - self.h:
+            self.vel.y -= self.vel.y
+            self.state = "Grounded"
+        
+
+    def draw(self, screen: pygame.surface.Surface):
+        image = pygame.transform.flip(self.image, self.flip_x, False)
+        screen.blit(image, self.pos.tuple())
+
+
+
+class Player(Actor):   
     def __init__(self, name="Steve", x=0, y=0):
-        super().__init__(image('magnet', (64, 64)), (x, y), name)
+        super().__init__(image('magnet', (64, 64)), (x, y), (64, 64), name)
         self.name = name
         self.pos = Vect2(x, y)
         self.vel = Vect2(0, 0)
@@ -69,24 +109,19 @@ class Player(Sprite):
         self.jump_speed = 50
         self.max_jump_nb = 3
         self.jump_nb = self.max_jump_nb
-        self.gravity = 3
 
         self.state = "Falling"
 
     def update(self):
         self.movement()
-        self.update_pos()
-
-        self.vel *= .90
-        self.vel.y += self.gravity
-        self.collision()
+        super().update()
     
         if self.state == "Grounded":
             self.jump_nb = self.max_jump_nb
+        
 
-    def draw(self, surface: pygame.surface.Surface):
-        image = pygame.transform.flip(self.image, self.flip_x, False)
-        surface.blit(image, self.pos.tuple())
+    def draw(self, screen: pygame.surface.Surface):
+        super().draw(screen)
 
     def movement(self):
         dir = Vect2(0, 0)
@@ -105,18 +140,10 @@ class Player(Sprite):
         self.vel += dir * self.speed
         self.dir = self.vel.normalized()
 
-    def update_pos(self):
 
-        self.pos += self.vel
-    
-    def collision(self):
-        # Théodore, bonne chance :3
-        if self.pos.y > Globals.window_height - self.h:
-            self.vel.y -= self.vel.y
-            self.state = "Grounded"
 
 class Magnetic_field:
-    def __init__(self,x = 0 ,y = 0 ,strength = 10 , rayon = 300):
+    def __init__(self, x = 0, y = 0, strength = 10, rayon = 300):
         self.pos = Vect2(x, y)
         self.strength = strength
         self.rayon = rayon
@@ -130,19 +157,32 @@ class Magnetic_field:
                     actor.vel += (actor.pos-self.pos).normalized()*self.strength
 
     def draw(self, surface: pygame.surface.Surface):
-        pygame.draw.circle(surface,Colors.BLUE,self.pos.tuple() ,self.rayon)
+        pygame.draw.circle(surface, Colors.BLUE, self.pos.tuple(), self.rayon)
 
-class Enemy(Sprite):
-    def __init__(self, pos: tuple, name: str = ''):
-        super().__init__(image, pos, name)
-        self.image = image('can', (64, 64))
+
+
+class Enemy(Actor):
+    def __init__(self, x=0, y=0, name:str='enemy'):
+        super().__init__(image('can', (64, 64)), (x,y), (64, 64), name)
+        self.pos = Vect2(x,y)
+
+    def update(self):
+        super().update()
+    
+    def draw(self, screen):
+        image = pygame.transform.flip(self.image, False, False)
+        screen.blit(image, self.pos.tuple())
 
 
 
 class Game:
     def __init__(self):
         self.player = Player()
-        self.actors = [Magnetic_field(300,300),self.player]
+        self.actors = []
+
+        self.new_actor(Magnetic_field(300,300))
+        self.new_actor(self.player)
+        self.new_actor(Enemy(50, 50))
 
     # Game.update.getlook.fertilize.elevat.add.divide.getpos.x.world.sup.label.groud.is_maj()
 
@@ -156,16 +196,23 @@ class Game:
             a.draw(screen)
         # Sprite(image())
         Globals.oldpressed = pygame.key.get_pressed()
+    
+    def new_actor(self, actor):
+        self.actors.append(actor)
 
 
 class Globals:
     window_width = 800
     window_height = 600
+    
     GAME = Game()
     FPS = 60
     frame = 0
+    
     oldpressed = []
     magnetic_fields = []
+
+    GRAVITY = 3
 
 def main():
     pygame.init()
@@ -183,7 +230,7 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 print(f"Hey, you pressed the key {event.key}!")
                 # Stop game
-                if event.key == pygame.K_F12:
+                if event.key == pygame.K_F12: 
                     running = False
 
         # Update & Draw
