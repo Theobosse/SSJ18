@@ -52,3 +52,6 @@ class Vect2:
     
     def dot(self, other):
         return self.x * other.x + self.y * other.y
+        
+    def dist(self, other):
+        return math.dist(self.tuple(), other.tuple())

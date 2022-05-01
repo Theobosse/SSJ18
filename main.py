@@ -3,6 +3,7 @@
 # By Arkanyota, Gousporu, Theobosse & Yolwoocle
 #  
 
+from telnetlib import theNULL
 import pygame
 import math
 
@@ -26,7 +27,6 @@ def keypressed(*keys):
 def image(name: str, size: tuple, angle: int = 0, x_flip: bool = False, y_flip: bool = False):
     return pygame.transform.flip(pygame.transform.scale(pygame.transform.rotate(
         pygame.image.load(f'./resources/images/{name}.png'), angle), size), x_flip, y_flip)
-
 
 class Sprite(pygame.sprite.DirtySprite):
     def __init__(self, image: pygame.surface.Surface, pos: tuple, name: str = ''):
@@ -54,6 +54,12 @@ class Colors:
 class Fonts:
     pygame.font.init()
     TITLE = pygame.font.Font('./resources/fonts/Calibri_Bold.TTF', 64)
+    NORMAL = pygame.font.Font('./resources/fonts/Calibri_Regular.ttf', 64)
+
+def display_text(screen, text, pos, color=pygame.Color(0, 0, 0)):
+    if type(pos) == Vect2: 
+        pos = pos.tuple()
+    screen.blit(Fonts.NORMAL.render(text, True, color), pos)
 
 
 class Actor(Sprite):
@@ -103,6 +109,7 @@ class Player(Actor):
         self.pole = "-"
 
         self.is_magnetic = True
+        self.is_active = False
 
         self.flip_x = False
         
@@ -116,6 +123,7 @@ class Player(Actor):
     def update(self):
         self.movement()
         super().update()
+        self.do_magnetism()
     
         if self.state == "Grounded":
             self.jump_nb = self.max_jump_nb
@@ -125,21 +133,36 @@ class Player(Actor):
         super().draw(screen)
 
     def movement(self):
-        dir = Vect2(0, 0)
-        if keydown(pygame.K_LEFT, pygame.K_q):
-            self.flip_x = True
+        xdir = 0
+        dir = Vect2(0,0)
+        if keydown(pygame.K_LEFT, pygame.K_q, pygame.K_a):
+            xdir -= 1
             dir.x -= 1
         if keydown(pygame.K_RIGHT, pygame.K_d):
-            self.flip_x = False
+            xdir += 1
             dir.x += 1
-        if keypressed(pygame.K_UP, pygame.K_z) and self.jump_nb > 0:
+        if keydown(pygame.K_UP, pygame.K_z, pygame.K_w):
+            dir.y -= 1
+        if keydown(pygame.K_DOWN, pygame.K_s):
+            dir.y += 1
+
+        if keypressed(pygame.K_SPACE):
+            self.jump()
+
+        dir.normalize()
+        self.vel.x += xdir * self.speed
+        self.flip_x = self.vel.x < 0
+        if dir.x or dir.y:
+            self.dir = Vect2(dir.x, dir.y)
+    
+    def do_magnetism(self):
+        self.is_active = keydown(pygame.K_RSHIFT)
+
+    def jump(self):
+        if self.jump_nb > 0:
             self.vel.y = -self.jump_speed
             self.jump_nb -= 1
             self.state = "Jumping"
-
-        dir.normalize()
-        self.vel += dir * self.speed
-        self.dir = self.vel.normalized()
 
 
 
@@ -171,15 +194,46 @@ class Enemy(Actor):
     def __init__(self, x=0, y=0, name:str='enemy'):
         super().__init__(image('can', (64, 64)), (x,y), (64, 64), name)
         self.pos = Vect2(x,y)
+        self.is_stuck = False
 
     def update(self):
         super().update()
-    
+        self.do_magnetism()
+        self.do_stuck()
+
     def draw(self, screen):
         image = pygame.transform.flip(self.image, False, False)
         screen.blit(image, self.pos.tuple())
+        if self.is_stuck:
+            display_text(screen, "STUCK", self.pos)
 
+    def do_magnetism(self):
+        player = Globals.GAME.player
 
+        if player.is_active:
+            # Attraction to player
+            diff = player.pos - self.pos
+            diff = diff.normalized()
+            self.vel += diff * 3 
+        
+    def do_stuck(self):
+        player = Globals.GAME.player
+        dist = self.pos.dist(player.pos)
+        old_stuck = self.is_stuck
+
+        # Stuck if player active and close enough
+        if player.is_active:
+            if dist < 32:
+                self.is_stuck = True
+        else:
+            self.is_stuck = False
+
+        if self.is_stuck:
+            self.pos = player.pos
+        else:
+            # If stuckness has just been deactivated, launch 
+            if old_stuck:
+                self.vel = player.dir * 60
 
 class Game:
     def __init__(self):
@@ -187,7 +241,7 @@ class Game:
         self.actors = []
 
         self.new_actor(Magnetic_field(300,300,5,"+"))
-        self.new_actor(Magnetic_field(600,-200,1.5,"-",600))
+        self.new_actor(Magnetic_field(600,-200,1.5,"-",50))
         self.new_actor(self.player)
         self.new_actor(Enemy(50, 50))
 
@@ -235,7 +289,6 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
             elif event.type == pygame.KEYDOWN:
-                print(f"Hey, you pressed the key {event.key}!")
                 # Stop game
                 if event.key == pygame.K_F12: 
                     running = False
