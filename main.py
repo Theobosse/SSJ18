@@ -67,6 +67,7 @@ def display_text(screen, text, pos, color=pygame.Color(0, 0, 0)):
 class Actor(Sprite):
     def __init__(self, image: pygame.surface.Surface, pos: tuple, size: tuple, name: str = ''):
         super().__init__(image, pos, name)
+        self.type = "undefined"
         self.pos = Vect2(*pos)
         self.vel = Vect2()
         self.gravity = 3
@@ -76,6 +77,8 @@ class Actor(Sprite):
         self.flip_x = False
 
         self.is_magnetic = False
+
+        self.is_deleted = False
 
     def update(self):
         self.update_pos()
@@ -117,6 +120,7 @@ class Actor(Sprite):
 class Player(Actor):
     def __init__(self, name="Steve", x=0, y=0):
         super().__init__(image('magnet', (64, 64)), (x, y), (64, 64), name)
+        self.type = "player"
         self.name = name
         self.pos = Vect2(x, y)
         self.vel = Vect2(0, 0)
@@ -205,11 +209,13 @@ class Magnetic_field:
         else:
             color = Colors.RED
         pygame.draw.circle(surface, color, self.pos.tuple(), self.radius)
+    
 
 
 class Enemy(Actor):
     def __init__(self, x=0, y=0, name:str='enemy'):
         super().__init__(image('can', (64, 64)), (x,y), (64, 64), name)
+        self.type = "enemy"
         self.pos = Vect2(x,y)
         self.is_stuck = False
         self.is_magnetic = True
@@ -254,6 +260,11 @@ class Enemy(Actor):
             # If stuckness has just been deactivated, launch 
             if old_stuck:
                 self.vel = player.dir * 60
+    
+    def do_damage(self):
+        for a in Globals.GAME.actors:
+            if type(a) == Enemy:
+                ...
 
 class Game:
     def __init__(self):
