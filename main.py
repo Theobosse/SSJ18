@@ -60,7 +60,10 @@ class Player(Sprite):
         self.dir = Vect2(0, 0)
         self.w = 64
         self.h = 64
+
         self.is_magnetic = True
+
+        self.flip_x = False
         
         self.speed = 1
         self.jump_speed = 50
@@ -70,9 +73,6 @@ class Player(Sprite):
 
         self.state = "Falling"
 
-    def draw(self, surface: pygame.surface.Surface):
-        surface.blit(self.image, self.pos.tuple())
-
     def update(self):
         self.movement()
         self.update_pos()
@@ -80,15 +80,21 @@ class Player(Sprite):
         self.vel *= .90
         self.vel.y += self.gravity
         self.collision()
-
+    
         if self.state == "Grounded":
             self.jump_nb = self.max_jump_nb
+
+    def draw(self, surface: pygame.surface.Surface):
+        pygame.transform.flip(self.image, self.flip_x, False)
+        surface.blit(self.image, self.pos.tuple())
 
     def movement(self):
         dir = Vect2(0, 0)
         if keydown(pygame.K_LEFT, pygame.K_q):
+            self.flip_x = True
             dir.x -= 1
         if keydown(pygame.K_RIGHT, pygame.K_d):
+            self.flip_x = False
             dir.x += 1
         if keypressed(pygame.K_UP, pygame.K_z) and self.jump_nb > 0:
             self.vel.y = -self.jump_speed
@@ -100,6 +106,7 @@ class Player(Sprite):
         self.dir = self.vel.normalized()
 
     def update_pos(self):
+
         self.pos += self.vel
     
     def collision(self):
