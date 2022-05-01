@@ -1,57 +1,11 @@
 import pygame
 import math
 
+from vector import Vect2
 
 def image(name: str, size: tuple, angle: int = 0, x_flip: bool = False, y_flip: bool = False):
     return pygame.transform.flip(pygame.transform.scale(pygame.transform.rotate(
         pygame.image.load(f'./resources/images/{name}.png'), angle), size), x_flip, y_flip)
-
-
-class Vect2:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-
-    def __add__(self, other):
-        return Vect2(self.x + other.x, self.y + other.y)
-
-    def __iadd__(self, other):
-        self = self + other
-
-    def __sub__(self, other):
-        return self + (-other)
-
-    def __isub__(self, other):
-        self = self - other
-
-    def __neg__(self):
-        return Vect2(-self.x, -self.y)
-
-    def __mul__(self, n):
-        self.x *= n
-        self.y *= n
-
-    def __imul__(self, other):
-        self.x *= other
-        self.y *= other
-
-    def __abs__(self):
-        return math.dist((0, 0), (self.x, self.y))
-
-    def __repr__(self):
-        return f"Vect2({self.x}, {self.y})"
-
-    def __str__(self):
-        return f"Vect2({self.x}, {self.y})"
-
-    def tuple(self):
-        return self.x, self.y
-
-    def normalize(self):
-        norm = abs(self)
-        if norm != 0:
-            self.x /= norm
-            self.y /= norm
 
 
 class Sprite(pygame.sprite.DirtySprite):
@@ -143,13 +97,14 @@ class Game:
         screen.blit(Fonts.TITLE.render("Hello", True, Colors.BLUE), (10, 10))
         for a in self.actors:
             a.update()
+        for a in self.actors:
             a.draw(screen)
         # Sprite(image())
 
 
 class Globals:
     GAME = Game()
-    DELTA = 60
+    FPS = 60
     frame = 0
 
 
@@ -167,11 +122,10 @@ def main():
                 running = False
             elif event.type == pygame.KEYDOWN:
                 print(f"Hey, you pressed the key {event.key}!")
-        # Update
-        # Draw
+        # Update & Draw
         Globals.GAME.update(screen)
         pygame.display.flip()
-        pygame.time.delay(1000 // Globals.DELTA)
+        pygame.time.delay(1000 // Globals.FPS)
 
     pygame.quit()
 
