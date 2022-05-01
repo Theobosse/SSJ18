@@ -94,12 +94,14 @@ class Actor(Sprite):
             b = False
         if ymod.collidelist(Globals.GAME.map.sprites()) >= 0:
             self.vel.y *= -0.0001
-            self.state = "Grounded"
+            if self.vel.y < 0:
+                self.state = "Grounded"
             b = False
         if b and xymod.collidelist(Globals.GAME.map.sprites()) >= 0:
             self.vel.x *= -0.0001
             self.vel.y *= -0.0001
-            self.state = "Grounded"
+            if self.vel.y < 0:
+                self.state = "Grounded"
 
     def draw(self, screen: pygame.surface.Surface):
         image = pygame.transform.flip(self.image, self.flip_x, False)
