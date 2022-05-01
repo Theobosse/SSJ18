@@ -1,4 +1,4 @@
-# 
+#
 # Untitled Space Score Jam 18 Game
 # By Arkanyota, Gousporu, Theobosse & Yolwoocle
 #  
@@ -69,12 +69,12 @@ class Actor(Sprite):
         super().__init__(image, pos, name)
         self.pos = Vect2(*pos)
         self.vel = Vect2()
-        self.gravity = 3
+        self.gravity = 2
         self.w = size[0]
         self.h = size[1]
         self.state = "Falling"
         self.flip_x = False
-        self.frition = .90
+        self.friction = .90
 
         self.is_magnetic = False
 
@@ -85,7 +85,7 @@ class Actor(Sprite):
 
     def update_pos(self):
         self.vel.y += self.gravity
-        self.vel *= self.frition
+        self.vel *= self.friction
 
     def collision(self):
         if self.pos.y > Globals.window_height - self.h - self.vel.y:
@@ -215,7 +215,8 @@ class Enemy(Actor):
         self.is_stuck = False
         self.is_magnetic = True
         self.pole = "+"
-        self.frition = .99
+        self.friction = .99
+        self.gravity = 1
 
     def update(self):
         super().update()
@@ -236,7 +237,7 @@ class Enemy(Actor):
             diff = (player.pos - self.pos).normalized()
             self.vel += diff * 3
             # counter gravity
-            self.vel.y -= 3
+            self.vel.y -= self.gravity
         
     def do_stuck(self):
         player = Globals.GAME.player
@@ -255,7 +256,8 @@ class Enemy(Actor):
         else:
             # If stuckness has just been deactivated, launch 
             if old_stuck:
-                self.vel = player.dir * 60
+                self.vel = player.dir * 20
+                player.vel -= player.dir * 20
 
 class Game:
     def __init__(self):
@@ -265,13 +267,21 @@ class Game:
 
         self.new_actor(Magnetic_field(300, 300, 3, "+", 100))
         self.new_actor(Magnetic_field(600, 200, 3, "-", 100))
-        self.new_actor(self.player)
-        self.new_actor(Enemy(50, 50))
-        self.new_actor(Enemy(400, 50))
+
 
         self.new_wall(400, 500, 100, 100, Colors.GREEN)
         self.new_wall(200, 400, 100, 100, Colors.GREEN)
         self.new_wall(150, 200, 100, 100, Colors.GREEN)
+        self.new_wall(700, 500, 100, 100, Colors.GREEN)
+        self.new_wall(600, 400, 100, 100, Colors.GREEN)
+        self.new_wall(450, 200, 100, 100, Colors.GREEN)
+
+        self.new_actor(Magnetic_field(800, 500, 3, "-", 100))
+        self.new_actor(Magnetic_field(1100, 0, 3, "+", 400))
+        
+        self.new_actor(self.player)
+        self.new_actor(Enemy(50, 50))
+        self.new_actor(Enemy(400, 50))
 
     def update(self, screen):
         Globals.frame += 1
@@ -296,8 +306,8 @@ class Game:
 
 
 class Globals:
-    window_width = 1600
-    window_height = 900
+    window_width = 1366
+    window_height = 768
 
     GAME = Game()
     FPS = 60
