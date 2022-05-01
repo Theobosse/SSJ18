@@ -7,6 +7,7 @@ from telnetlib import theNULL
 import pygame
 import math
 import random
+import time
 
 from vector import Vect2
 
@@ -370,6 +371,8 @@ def main():
 
     # Game Loop
     running = True
+    t = 0
+    oldtime = time.time()
 
     while running:
         # Input
@@ -381,10 +384,18 @@ def main():
                 if event.key == pygame.K_F12:
                     running = False
 
-        # Update & Draw
-        Globals.GAME.update(screen)
-        pygame.display.flip()
-        pygame.time.delay(1000 // Globals.FPS)
+        #print(time.time(), "diff=", 1000*(oldtime-time.time()))
+        t -= 1000 * (time.time() - oldtime)
+        limit = 10
+        while t < 0 and limit > 0:
+            limit -= 1
+            t += 1000 // Globals.FPS
+            # Update & Draw
+            Globals.GAME.update(screen)
+            pygame.display.flip()
+            #pygame.time.delay(1000 // Globals.FPS)
+
+        oldtime = time.time()
 
     pygame.quit()
 
