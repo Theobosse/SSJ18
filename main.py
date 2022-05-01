@@ -100,6 +100,7 @@ class Player(Actor):
         self.dir = Vect2(0, 0)
         self.w = 64
         self.h = 64
+        self.pole = "-"
 
         self.is_magnetic = True
 
@@ -143,21 +144,26 @@ class Player(Actor):
 
 
 class Magnetic_field:
-    def __init__(self, x = 0, y = 0, strength = 10, rayon = 300):
+    def __init__(self, x = 0, y = 0, strength = 5, pole = "+", radius = 100):
         self.pos = Vect2(x, y)
         self.strength = strength
-        self.rayon = rayon
+        self.radius = radius
         self.is_magnetic = False
+        self.pole = pole
         
     def update(self):
         #TODO
         for actor in Globals.GAME.actors:
-            if math.dist(self.pos.tuple(), actor.pos.tuple())<= self.rayon:
+            if math.dist(self.pos.tuple(), actor.pos.tuple())<= self.radius:
                 if actor.is_magnetic:
-                    actor.vel += (actor.pos-self.pos).normalized()*self.strength
+                    actor.vel += (actor.pos-self.pos).normalized()*self.strength*((self.pole != actor.pole)*2-1)
 
     def draw(self, surface: pygame.surface.Surface):
-        pygame.draw.circle(surface, Colors.BLUE, self.pos.tuple(), self.rayon)
+        if self.pole == "+":
+            color = Colors.BLUE
+        else:
+            color = Colors.RED
+        pygame.draw.circle(surface,color,self.pos.tuple() ,self.radius)
 
 
 
@@ -180,7 +186,8 @@ class Game:
         self.player = Player()
         self.actors = []
 
-        self.new_actor(Magnetic_field(300,300))
+        self.new_actor(Magnetic_field(300,300,5,"+"))
+        self.new_actor(Magnetic_field(600,-200,1.5,"-",600))
         self.new_actor(self.player)
         self.new_actor(Enemy(50, 50))
 
