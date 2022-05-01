@@ -173,6 +173,8 @@ class Player(Actor):
     
     def do_magnetism(self):
         self.is_active = keydown(pygame.K_RSHIFT)
+        #if self.is_active :
+        #    Globals.GAME.new_actor(Magnetic_field(self.pos.x, self.pos.y, "-", 200))
 
     def jump(self):
         if self.jump_nb > 0:
@@ -210,6 +212,8 @@ class Enemy(Actor):
         super().__init__(image('can', (64, 64)), (x,y), (64, 64), name)
         self.pos = Vect2(x,y)
         self.is_stuck = False
+        self.is_magnetic = True
+        self.pole = "+"
 
     def update(self):
         super().update()
@@ -227,9 +231,10 @@ class Enemy(Actor):
 
         if player.is_active:
             # Attraction to player
-            diff = player.pos - self.pos
-            diff = diff.normalized()
-            self.vel += diff * 3 
+            diff = (player.pos - self.pos).normalized()
+            self.vel += diff * 3
+            # counter gravity
+            self.vel.y -= 3
         
     def do_stuck(self):
         player = Globals.GAME.player
