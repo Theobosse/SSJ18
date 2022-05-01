@@ -80,7 +80,7 @@ class Actor(Sprite):
 
     def collision(self):
         # Théodore, bonne chance :3
-        if self.pos.y > Globals.window_height - self.h:
+        if self.pos.y > Globals.window_height - self.h - self.vel.y:
             self.vel.y -= self.vel.y
             self.state = "Grounded"
         
