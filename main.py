@@ -50,8 +50,9 @@ class Player(Sprite):
         self.name = name
         self.pos = Vect2(x, y)
         self.vel = Vect2(0, 0)
-        self.w = 32
-        self.h = 32
+        self.dir = Vect2(0, 0)
+        self.w = 64
+        self.h = 64
         
         self.speed = 0.5
         self.jump_speed = 20
@@ -82,7 +83,8 @@ class Player(Sprite):
 
         dir.normalize()
         self.vel += dir * self.speed
-        
+        self.dir = self.vel.normalized()
+
     def update_pos(self):
         self.pos.x += self.vel.x
         self.pos.y += self.vel.y

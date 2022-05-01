@@ -1,7 +1,7 @@
 import math
 
 class Vect2:
-    def __init__(self, x, y):
+    def __init__(self, x=0, y=0):
         self.x = x
         self.y = y
 
@@ -41,11 +41,14 @@ class Vect2:
     def tuple(self):
         return self.x, self.y
 
-    def normalize(self):
+    def normalized(self):
         norm = abs(self)
-        if norm != 0:
-            self.x /= norm
-            self.y /= norm
+        if norm == 0:
+            return Vect2()
+        return Vect2(self.x / norm, self.y / norm)
+
+    def normalize(self):
+        self = self.normalized()
     
     def dot(self, other):
         return self.x * other.x + self.y * other.y
