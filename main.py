@@ -75,6 +75,7 @@ class Actor(Sprite):
         self.h = size[1]
         self.state = "Falling"
         self.flip_x = False
+        self.frition = .90
 
         self.is_magnetic = False
 
@@ -87,7 +88,7 @@ class Actor(Sprite):
 
     def update_pos(self):
         self.vel.y += self.gravity
-        self.vel *= .90
+        self.vel *= self.frition
 
     def collision(self):
         if self.pos.y > Globals.window_height - self.h - self.vel.y:
@@ -220,6 +221,7 @@ class Enemy(Actor):
         self.is_stuck = False
         self.is_magnetic = True
         self.pole = "+"
+        self.frition = .99
 
     def update(self):
         super().update()
@@ -272,10 +274,11 @@ class Game:
         self.actors = []
         self.map = pygame.sprite.Group()
 
-        self.new_actor(Magnetic_field(300, 300, 5, "+", 100))
-        self.new_actor(Magnetic_field(600, 200, 5, "-", 100))
+        self.new_actor(Magnetic_field(300, 300, 3, "+", 100))
+        self.new_actor(Magnetic_field(600, 200, 3, "-", 100))
         self.new_actor(self.player)
         self.new_actor(Enemy(50, 50))
+        self.new_actor(Enemy(400, 50))
 
         self.new_wall(400, 500, 100, 100, Colors.GREEN)
         self.new_wall(200, 400, 100, 100, Colors.GREEN)
@@ -304,8 +307,8 @@ class Game:
 
 
 class Globals:
-    window_width = 800
-    window_height = 600
+    window_width = 1600
+    window_height = 900
 
     GAME = Game()
     FPS = 60
