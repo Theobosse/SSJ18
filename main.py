@@ -9,6 +9,13 @@ def keydown(*keys):
         if pressed[k]:
             return True
     return False
+    
+def keypressed(*keys):
+    pressed = pygame.key.get_pressed()
+    for k in keys:
+        if pressed[k] and not Globals.oldpressed[k]:
+            return True
+    return False    
 
 
 def image(name: str, size: tuple, angle: int = 0, x_flip: bool = False, y_flip: bool = False):
@@ -54,11 +61,12 @@ class Player(Sprite):
         self.h = 32
         
         self.speed = 0.5
-        self.jump_speed = 20
+        self.jump_speed = 50
+        self.max_jump_nb = 3
+        self.jump_nb = self.max_jump_nb
         self.gravity = 3
 
-        self.is_jumping = False
-        self.is_falling = False
+        self.state = "Falling"
 
     def draw(self, surface: pygame.surface.Surface):
         surface.blit(self.image, self.pos.tuple())
@@ -71,14 +79,19 @@ class Player(Sprite):
         self.vel.y += self.gravity
         self.collision()
 
+        if self.state == "Grounded":
+            self.jump_nb = self.max_jump_nb
+
     def movement(self):
         dir = Vect2(0, 0)
         if keydown(pygame.K_LEFT, pygame.K_q):
             dir.x -= 1
         if keydown(pygame.K_RIGHT, pygame.K_d):
             dir.x += 1
-        if keydown(pygame.K_UP, pygame.K_z):
+        if keypressed(pygame.K_UP, pygame.K_z) and self.jump_nb > 0:
             self.vel.y = -self.jump_speed
+            self.jump_nb -= 1
+            self.state = "Jumping"
 
         dir.normalize()
         self.vel += dir * self.speed
@@ -90,7 +103,8 @@ class Player(Sprite):
     def collision(self):
         # Théodore, bonne chance :3
         if self.pos.y > Globals.window_height - self.h:
-            self.pos.y = Globals.window_height - self.h
+            self.vel.y -= self.vel.y
+            self.state = "Grounded"
 
 
 class Game:
@@ -109,6 +123,7 @@ class Game:
         for a in self.actors:
             a.draw(screen)
         # Sprite(image())
+        Globals.oldpressed = pygame.key.get_pressed()
 
 
 class Globals:
@@ -117,6 +132,7 @@ class Globals:
     GAME = Game()
     FPS = 60
     frame = 0
+    oldpressed = []
 
 def main():
     pygame.init()
