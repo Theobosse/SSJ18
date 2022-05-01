@@ -148,7 +148,7 @@ class Enemy(Sprite):
 class Game:
     def __init__(self):
         self.player = Player()
-        self.actors = [Magnetic_field(300,300,5,"+"),Magnetic_field(600,300,5,"-"),self.player]
+        self.actors = [Magnetic_field(300,300,5,"+"),Magnetic_field(600,-200,1.5,"-",600),self.player]
 
     # Game.update.getlook.fertilize.elevat.add.divide.getpos.x.world.sup.label.groud.is_maj()
 
