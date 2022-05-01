@@ -222,7 +222,7 @@ class Enemy(Actor):
         self.is_magnetic = True
         self.pole = "+"
 
-        self.friction = .99
+        self.friction = .95
         self.gravity = 1
 
         self.radius = 32
