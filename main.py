@@ -132,7 +132,7 @@ class Player(Actor):
         self.dir = Vect2(0, 0)
         self.w = 64
         self.h = 64
-        self.pole = "-"
+        self.pole = "+"
         self.gravity = 1.5
 
         self.is_magnetic = True
@@ -275,7 +275,7 @@ class Enemy(Actor):
         old_stuck = self.is_stuck
 
         # Stuck if player active and close enough
-        if player.is_active:
+        if player.pole == self.pole:
             if dist < self.radius:
                 self.is_stuck = True
         else:
@@ -323,17 +323,14 @@ class Game:
         if Globals.frame == 1:
             self.player = Player()
 
-            self.new_wall(400, 500, 100, 100, Colors.GREEN)
-            self.new_wall(200, 400, 100, 100, Colors.GREEN)
-            self.new_wall(150, 200, 100, 100, Colors.GREEN)
-            self.new_wall(700, 500, 100, 100, Colors.GREEN)
-            self.new_wall(600, 400, 100, 100, Colors.GREEN)
-            self.new_wall(450, 200, 100, 100, Colors.GREEN)
+            self.new_wall((self.window_width-300)//2, self.window_height//3, 300, 100, Colors.GREEN)
+            self.new_wall(self.window_width, 0, 30, 10000, Colors.GREEN)
+            self.new_wall(0, 0-1000, 3000, 1000, Colors.GREEN)
+            self.new_wall(0-1000, 0, 1000, 3000, Colors.GREEN)
 
-            self.new_actor(MagneticField(300, 300, 3, "+", 100))
-            self.new_actor(MagneticField(600, 200, 3, "-", 100))
-            self.new_actor(MagneticField(800, 500, 3, "-", 100))
-            self.new_actor(MagneticField(1100, self.window_height, 3, "+", 400))
+
+            self.new_actor(MagneticField(self.window_width, self.window_height, 125, "-", 100))
+            self.new_actor(MagneticField(0, self.window_height, 125, "-", 100))
             
             self.new_actor(self.player)
 
@@ -369,8 +366,8 @@ class Game:
 
 
 class Globals:
-    window_width = int(1366 * 1.25)
-    window_height = int(768 * 1.25)
+    window_width = int(1366 * 1)
+    window_height = int(768 * 1)
 
     GAME = Game(window_width, window_height)
     FPS = 60
