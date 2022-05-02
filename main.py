@@ -131,9 +131,13 @@ class Player(Actor):
         self.w = 64
         self.h = 64
         self.pole = "-"
+        self.gravity = 1.5
 
         self.is_magnetic = True
         self.is_active = False
+
+        self.magneticField = MagneticField(x, y, 3, self.pole, 400)
+        Globals.GAME.new_actor(self.magneticField)
 
         self.flip_x = False
 
@@ -169,7 +173,7 @@ class Player(Actor):
         if keydown(pygame.K_DOWN, pygame.K_s):
             dir.y += 1
 
-        if keypressed(pygame.K_c):
+        if keypressed(pygame.K_SPACE,pygame.K_c):
             self.jump()
 
         dir.normalize()
@@ -179,7 +183,15 @@ class Player(Actor):
             self.dir = Vect2(dir.x, dir.y)
     
     def do_magnetism(self):
-        self.is_active = keydown(pygame.K_x)
+        self.is_active = keypressed(pygame.K_x,pygame.K_RSHIFT)
+        if self.is_active:
+            if self.pole == "+":
+                self.pole = "-"
+            else:
+                self.pole = "+"    
+
+        self.magneticField.pos = self.pos
+        self.magneticField.pole = self.pole
         #if self.is_active :
         #    Globals.GAME.new_actor(MagneticField(self.pos.x, self.pos.y, "-", 200))
 
@@ -273,15 +285,15 @@ class Enemy(Actor):
             # If stuckness has just been deactivated, launch 
             if old_stuck:
 
-                self.vel = player.dir * 20
-                player.vel -= player.dir * 20
+                self.vel = player.dir+(Vect2(random.random(),random.random())*.5) * 20
+                player.vel -= player.dir * 10
 
     
     def enemy_collision(self):
         for actor in Globals.GAME.actors:
             if type(actor) == Enemy and actor != self:
                 dist = self.pos.dist(actor.pos)
-                if dist <= self.radius + actor.radius:
+                if dist <= self.radius + actor.radius and not actor.is_stuck and not self.is_stuck:
                     self.collision_reaction(actor)
 
     def collision_reaction(self, actor):
@@ -298,33 +310,36 @@ class Enemy(Actor):
 
 class Game:
     def __init__(self, window_width, window_height):
-        self.player = Player()
-        self.actors = []
-        self.map = pygame.sprite.Group()
-        
+
         self.window_width = window_width
         self.window_height = window_height
-
-        self.new_wall(400, 500, 100, 100, Colors.GREEN)
-        self.new_wall(200, 400, 100, 100, Colors.GREEN)
-        self.new_wall(150, 200, 100, 100, Colors.GREEN)
-        self.new_wall(700, 500, 100, 100, Colors.GREEN)
-        self.new_wall(600, 400, 100, 100, Colors.GREEN)
-        self.new_wall(450, 200, 100, 100, Colors.GREEN)
-
-        self.new_actor(MagneticField(300, 300, 3, "+", 100))
-        self.new_actor(MagneticField(600, 200, 3, "-", 100))
-        self.new_actor(MagneticField(800, 500, 3, "-", 100))
-        self.new_actor(MagneticField(1100, 0, 3, "+", 400))
-        
-        self.new_actor(self.player)
-        for i in range(10):
-            x = random.randint(0, self.window_width)
-            y = random.randint(0, self.window_height)
-            self.new_actor(Enemy(x, y))
-        self.new_actor(Enemy(400, 50))
+        self.actors = []
+        self.map = pygame.sprite.Group()
 
     def update(self, screen):
+        if Globals.frame == 1:
+            self.player = Player()
+
+            self.new_wall(400, 500, 100, 100, Colors.GREEN)
+            self.new_wall(200, 400, 100, 100, Colors.GREEN)
+            self.new_wall(150, 200, 100, 100, Colors.GREEN)
+            self.new_wall(700, 500, 100, 100, Colors.GREEN)
+            self.new_wall(600, 400, 100, 100, Colors.GREEN)
+            self.new_wall(450, 200, 100, 100, Colors.GREEN)
+
+            self.new_actor(MagneticField(300, 300, 3, "+", 100))
+            self.new_actor(MagneticField(600, 200, 3, "-", 100))
+            self.new_actor(MagneticField(800, 500, 3, "-", 100))
+            self.new_actor(MagneticField(1100, 0, 3, "+", 400))
+            
+            self.new_actor(self.player)
+
+            for i in range(10):
+                x = random.randint(0, self.window_width)
+                y = random.randint(0, self.window_height)
+                self.new_actor(Enemy(x, y))
+                self.new_actor(Enemy(400, 50))
+
         Globals.frame += 1
         screen.fill(Colors.BG)
         screen.blit(Fonts.TITLE.render("Hello", True, Colors.BLUE), (10, 10))
@@ -351,8 +366,8 @@ class Game:
 
 
 class Globals:
-    window_width = int(1366 * .75)
-    window_height = int(768 * .75)
+    window_width = int(1366 * 1.25)
+    window_height = int(768 * 1.25)
 
     GAME = Game(window_width, window_height)
     FPS = 60
