@@ -266,6 +266,15 @@ class Enemy(Actor):
         self.pole = pole
         self.has_been_grabbed = False
 
+        self.images_blue = {
+            'idle' : image('can_blue', (64, 64)),
+            'thrown' : image('can_thrown_blue', (64, 64)),
+        }
+        self.images_red = {
+            'idle' : image('can_red', (64, 64)),
+            'thrown' : image('can_thrown_red', (64, 64)),
+        }
+
         self.friction = .95
 
         self.radius = 32
@@ -285,6 +294,7 @@ class Enemy(Actor):
         super().update()
         self.do_stuck()
         self.enemy_collision()
+        self.update_image()
 
     def draw(self, screen):
         image = pygame.transform.flip(self.image, False, False)
@@ -339,6 +349,17 @@ class Enemy(Actor):
     
     def on_collision(self):
         self.is_damaging = False
+    
+    def update_image(self):
+        state = "idle"
+        if self.is_damaging:
+            state = "thrown"
+        
+        images = self.images_blue
+        if self.pole == "+":
+            images = self.images_red
+
+        self.image = images[state]
 
 
 
