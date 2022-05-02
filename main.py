@@ -88,6 +88,8 @@ class Actor(Sprite):
         self.is_deleted = False
 
     def update(self):
+        if self.vel.norm() >= 100:
+            self.vel = self.vel.normalized() * 100
         self.update_pos()
         self.collision()
         self.pos += self.vel
@@ -265,6 +267,7 @@ class Enemy(Actor):
         self.is_magnetic = True
         self.pole = pole
         self.has_been_grabbed = False
+        self.is_damaging = False
 
         self.images_blue = {
             'idle' : image('can_blue', (64, 64)),
@@ -273,6 +276,10 @@ class Enemy(Actor):
         self.images_red = {
             'idle' : image('can_red', (64, 64)),
             'thrown' : image('can_thrown_red', (64, 64)),
+        }
+        self.images_neutre = {
+            'idle' : image('can_neutral', (64, 64)),
+            'thrown' : image('can_thrown_neutral', (64, 64)),
         }
 
         self.friction = .95
@@ -287,7 +294,6 @@ class Enemy(Actor):
             self.image = image('can_neutral', (64, 64)) 
             self.is_magnetic = False
 
-        self.is_damaging = False
 
 
     def update(self):
@@ -355,9 +361,12 @@ class Enemy(Actor):
         if self.is_damaging:
             state = "thrown"
         
-        images = self.images_blue
         if self.pole == "+":
             images = self.images_red
+        elif self.pole == "-":
+            images = self.images_blue
+        elif self.pole == "n":
+            images = self.images_neutre
 
         self.image = images[state]
 
