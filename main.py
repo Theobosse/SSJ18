@@ -97,9 +97,6 @@ class Actor(Sprite):
         self.vel.x *= self.friction
 
     def collision(self):
-        if self.pos.y > Globals.window_height - self.h - self.vel.y:
-            self.vel.y -= self.vel.y
-            self.state = "Grounded"
 
         xmod = pygame.rect.Rect(self.pos.x + self.vel.x, self.pos.y, self.rect.width, self.rect.height)
         ymod = pygame.rect.Rect(self.pos.x, self.pos.y + self.vel.y, self.rect.width, self.rect.height)
@@ -156,7 +153,7 @@ class Player(Actor):
         self.flip_x = False
 
         self.speed = 1
-        self.jump_speed = 40
+        self.jump_speed = 30
         self.max_jump_nb = 3
         self.jump_nb = self.max_jump_nb
 
@@ -360,8 +357,9 @@ class Game:
 
             self.new_wall((self.window_width-300)//2, self.window_height//3, 300, 100, Colors.GREEN)
             self.new_wall(self.window_width, 0, 30, 10000, Colors.GREEN)
-            self.new_wall(0, 0-1000, 3000, 1000, Colors.GREEN)
-            self.new_wall(0-1000, 0, 1000, 3000, Colors.GREEN)
+            self.new_wall(0, -100, self.window_width, 100, Colors.GREEN)
+            self.new_wall(-100, 0, 100, self.window_height, Colors.GREEN)
+            self.new_wall(0, self.window_height-10, self.window_width, 100, Colors.GREEN)
 
 
             #self.new_actor(MagneticField(self.window_width, self.window_height, 125, "+", 100))
