@@ -122,7 +122,7 @@ class Actor(Sprite):
 
 class Player(Actor):
     def __init__(self, name="Steve", x=0, y=0):
-        super().__init__(image('magnet', (64, 64)), (x, y), (64, 64), name)
+        super().__init__(image('magnet_blue', (64, 64)), (x, y), (64, 64), name)
         self.type = "player"
         self.name = name
         self.pos = Vect2(x, y)
@@ -132,6 +132,9 @@ class Player(Actor):
         self.h = 64
         self.pole = "-"
         self.gravity = 1.5
+
+        self.image_blue = image('magnet_blue', (64, 64))
+        self.image_red = image('magnet_red', (64, 64))
 
         self.is_magnetic = True
         self.is_active = False
@@ -152,6 +155,10 @@ class Player(Actor):
         self.movement()
         super().update()
         self.do_magnetism()
+        if self.pole == "-":
+            self.image = self.image_red
+        else:
+            self.image = self.image_blue
     
         if self.state == "Grounded":
             self.jump_nb = self.max_jump_nb
@@ -284,10 +291,8 @@ class Enemy(Actor):
         else:
             # If stuckness has just been deactivated, launch 
             if old_stuck:
-
-                self.vel = player.dir+(Vect2(random.random(),random.random())*.5) * 20
+                self.vel = player.dir + (Vect2(random.random(),random.random())*.5) * 20
                 player.vel -= player.dir * 10
-
     
     def enemy_collision(self):
         for actor in Globals.GAME.actors:
