@@ -132,7 +132,7 @@ class Player(Actor):
         self.dir = Vect2(0, 0)
         self.w = 64
         self.h = 64
-        self.pole = "+"
+        self.pole = "-"
         self.gravity = 1.5
 
         self.image_blue = image('magnet_blue', (64, 64))
@@ -158,9 +158,9 @@ class Player(Actor):
         super().update()
         self.do_magnetism()
         if self.pole == "-":
-            self.image = self.image_red
-        else:
             self.image = self.image_blue
+        else:
+            self.image = self.image_red
     
         if self.state == "Grounded":
             self.jump_nb = self.max_jump_nb
@@ -228,13 +228,13 @@ class MagneticField:
                 if actor.is_magnetic:
                     diff = (actor.pos - self.pos).normalized()
                     actor.vel += diff * self.strength * (
-                                (self.pole != actor.pole) * 2 - 1)
+                                (self.pole == actor.pole) * 2 - 1)
 
     def draw(self, surface: pygame.surface.Surface):
         if self.pole == "+":
-            color = Colors.BLUE
-        else:
             color = Colors.RED
+        else:
+            color = Colors.BLUE
         pygame.draw.circle(surface, color, self.pos.tuple(), self.radius)
     
 
@@ -247,6 +247,7 @@ class Enemy(Actor):
         self.is_stuck = False
         self.is_magnetic = True
         self.pole = "+"
+        self.has_been_grabed = False
 
         self.friction = .95
         self.gravity = 1
@@ -282,11 +283,13 @@ class Enemy(Actor):
         old_stuck = self.is_stuck
 
         # Stuck if player active and close enough
-        if player.pole == self.pole:
+        if player.pole != self.pole:
             if dist < self.radius:
                 self.is_stuck = True
+                self.has_been_grabed = True
         else:
             self.is_stuck = False
+            
 
         if self.is_stuck:
             self.pos = player.pos
@@ -305,7 +308,7 @@ class Enemy(Actor):
 
     def collision_reaction(self, actor):
         are_not_stuck = not actor.is_stuck and not self.is_stuck
-        if actor.vel.norm() > 30 and are_not_stuck:
+        if actor.vel.norm() > 30 and are_not_stuck and not actor.has_been_grabed and self.has_been_grabed: 
             self.is_deleted = True
             actor.is_deleted = True
         
@@ -333,8 +336,8 @@ class Game:
             self.new_wall(0-1000, 0, 1000, 3000, Colors.GREEN)
 
 
-            self.new_actor(MagneticField(self.window_width, self.window_height, 125, "-", 100))
-            self.new_actor(MagneticField(0, self.window_height, 125, "-", 100))
+            self.new_actor(MagneticField(self.window_width, self.window_height, 125, "+", 100))
+            self.new_actor(MagneticField(0, self.window_height, 125, "+", 100))
             
             for i in range(10):
                 x = random.randint(0, self.window_width)
