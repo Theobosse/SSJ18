@@ -340,13 +340,13 @@ class Game:
             self.new_actor(MagneticField(800, 500, 3, "-", 100))
             self.new_actor(MagneticField(1100, self.window_height, 3, "+", 400))
             
-            self.new_actor(self.player)
-
             for i in range(10):
                 x = random.randint(0, self.window_width)
                 y = random.randint(0, self.window_height)
                 self.new_actor(Enemy(x, y))
                 self.new_actor(Enemy(400, 50))
+
+            self.new_actor(self.player)
 
         Globals.frame += 1
         screen.fill(Colors.BG)
