@@ -305,10 +305,9 @@ class Enemy(Actor):
 
     def collision_reaction(self, actor):
         are_not_stuck = not actor.is_stuck and not self.is_stuck
-        if actor.vel.norm() > 10 and are_not_stuck:
-            ...
-            #self.is_deleted = True
-            #actor.is_deleted = True
+        if actor.vel.norm() > 30 and are_not_stuck:
+            self.is_deleted = True
+            actor.is_deleted = True
         
         # Repulsion
         diff = (actor.pos - self.pos).normalized()
