@@ -59,7 +59,6 @@ class Colors:
     BLUE = pygame.Color(0, 0, 255)
     BG = pygame.Color(255, 255, 255)
 
-
 class Fonts:
     pygame.font.init()
     TITLE = pygame.font.Font('./resources/fonts/Calibri_Bold.TTF', 64)
@@ -143,7 +142,7 @@ class Player(Actor):
         self.dir = Vect2(0, 0)
         self.w = 64
         self.h = 64
-        self.pole = "+"
+        self.pole = "-"
 
         self.image_blue = image('magnet_blue', (64, 64))
         self.image_red = image('magnet_red', (64, 64))
@@ -168,9 +167,9 @@ class Player(Actor):
         super().update()
         self.do_magnetism()
         if self.pole == "-":
-            self.image = self.image_red
-        else:
             self.image = self.image_blue
+        else:
+            self.image = self.image_red
     
         if self.state == "Grounded":
             self.jump_nb = self.max_jump_nb
@@ -238,16 +237,16 @@ class MagneticField:
                 if actor.is_magnetic:
                     diff = (actor.pos - self.pos).normalized()
                     actor.vel += diff * self.strength * (
-                                (self.pole != actor.pole) * 2 - 1)
+                                (self.pole == actor.pole) * 2 - 1)
 
     def draw(self, surface: pygame.surface.Surface):
         color = None
         lcolor = None
         a = 60
         if self.pole == "+":
-            color = (0, 0, 255, a)
+            color = pygame.Color(255, 0, 0, a=a)
         else:
-            color = (255, 0, 0, a)
+            color = pygame.Color( 0, 0, 255, a=a)
 
         interval = 16
         timescale = 20
@@ -261,13 +260,14 @@ class MagneticField:
 
 
 class Enemy(Actor):
-    def __init__(self, x=0, y=0, name:str='enemy'):
+    def __init__(self, x=0, y=0, name:str='enemy' , pole = "+"):
         super().__init__(image('can', (64, 64)), (x,y), (64, 64), name)
         self.type = "enemy"
         self.pos = Vect2(x,y)
         self.is_stuck = False
         self.is_magnetic = True
-        self.pole = "+"
+        self.pole = pole
+        self.has_been_grabbed = False
 
         self.friction = .95
 
@@ -302,11 +302,13 @@ class Enemy(Actor):
         old_stuck = self.is_stuck
 
         # Stuck if player active and close enough
-        if player.pole == self.pole:
+        if player.pole != self.pole:
             if dist < self.radius:
                 self.is_stuck = True
+                self.has_been_grabbed = True
         else:
             self.is_stuck = False
+            
 
         if self.is_stuck:
             self.pos = player.pos
@@ -327,7 +329,9 @@ class Enemy(Actor):
     def collision_reaction(self, actor):
         hit_by_damaging_enemy = not self.is_damaging and actor.is_damaging
         are_not_stuck = not actor.is_stuck and not self.is_stuck
-        if hit_by_damaging_enemy and are_not_stuck:
+        are_not_grabbed = not actor.has_been_grabbed and self.has_been_grabbed
+        
+        if hit_by_damaging_enemy and are_not_stuck and are_not_grabbed:
             self.is_deleted = True
             actor.is_deleted = True
         
@@ -358,8 +362,8 @@ class Game:
             self.new_wall(0-1000, 0, 1000, 3000, Colors.GREEN)
 
 
-            self.new_actor(MagneticField(self.window_width, self.window_height, 125, "-", 100))
-            self.new_actor(MagneticField(0, self.window_height, 125, "-", 100))
+            self.new_actor(MagneticField(self.window_width, self.window_height, 125, "+", 100))
+            self.new_actor(MagneticField(0, self.window_height, 125, "+", 100))
             
             for i in range(10):
                 x = random.randint(0, self.window_width)
