@@ -11,6 +11,12 @@ import time
 
 from vector import Vect2
 
+def draw_circle_alpha(surface, color, center, radius):
+    # https://stackoverflow.com/questions/6339057/draw-a-transparent-rectangles-and-polygons-in-pygame
+    target_rect = pygame.Rect(center, (0, 0)).inflate((radius * 2, radius * 2))
+    shape_surf = pygame.Surface(target_rect.size, pygame.SRCALPHA)
+    pygame.draw.circle(shape_surf, color, (radius, radius), radius)
+    surface.blit(shape_surf, target_rect)
 
 def keydown(*keys):
     pressed = pygame.key.get_pressed()
@@ -232,17 +238,21 @@ class MagneticField:
 
     def draw(self, surface: pygame.surface.Surface):
         color = None
+        lcolor = None
+        a = 40
         if self.pole == "+":
-            color = pygame.Color(0, 0, 255)
+            color = pygame.Color(0, 0, 255, a=a)
+            lcolor = pygame.Color(30, 30, 255, a=a)
         else:
-            color = pygame.Color(255, 0, 0)
-        color.a = 0
+            color = pygame.Color(255, 0, 0, a=a)
+            lcolor = pygame.Color(255, 30, 30, a=a)
 
         interval = 16
         timescale = 20
         r = (time.time() * timescale) % interval
         while r < self.radius:
-            pygame.draw.circle(surface, color, self.pos.tuple(), r, width=2)
+            pygame.draw.circle(surface, color, self.pos.tuple(), r, width=12)
+            #pygame.draw.circle(surface, lcolor, self.pos.tuple(), r+8, width=8)
             r += interval
     
 
