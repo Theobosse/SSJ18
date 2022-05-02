@@ -13,10 +13,9 @@ from vector import Vect2
 
 def draw_circle_alpha(surface, color, center, radius):
     # https://stackoverflow.com/questions/6339057/draw-a-transparent-rectangles-and-polygons-in-pygame
-    target_rect = pygame.Rect(center, (0, 0)).inflate((radius * 2, radius * 2))
-    shape_surf = pygame.Surface(target_rect.size, pygame.SRCALPHA)
-    pygame.draw.circle(shape_surf, color, (radius, radius), radius)
-    surface.blit(shape_surf, target_rect)
+    surface = pygame.Surface((radius*2,radius*2), pygame.SRCALPHA)
+    pygame.draw.circle(surface,color,center,10)
+    surface.blit(surface, (0,0))
 
 def keydown(*keys):
     pressed = pygame.key.get_pressed()
@@ -96,7 +95,7 @@ class Actor(Sprite):
 
     def update_pos(self):
         self.vel.y += self.gravity
-        self.vel *= self.friction
+        self.vel.x *= self.friction
 
     def collision(self):
         if self.pos.y > Globals.window_height - self.h - self.vel.y:
@@ -110,16 +109,22 @@ class Actor(Sprite):
         if xmod.collidelist(Globals.GAME.map.sprites()) >= 0:
             self.vel.x *= -0.0001
             b = False
+            self.on_collision()
         if ymod.collidelist(Globals.GAME.map.sprites()) >= 0:
             self.vel.y *= -0.0001
             if self.vel.y < 0:
                 self.state = "Grounded"
             b = False
+            self.on_collision()
         if b and xymod.collidelist(Globals.GAME.map.sprites()) >= 0:
             self.vel.x *= -0.0001
             self.vel.y *= -0.0001
             if self.vel.y < 0:
                 self.state = "Grounded"
+            self.on_collision()
+
+    def on_collision():
+        ...
 
     def draw(self, screen: pygame.surface.Surface):
 
@@ -139,7 +144,6 @@ class Player(Actor):
         self.w = 64
         self.h = 64
         self.pole = "+"
-        self.gravity = 1.5
 
         self.image_blue = image('magnet_blue', (64, 64))
         self.image_red = image('magnet_red', (64, 64))
@@ -239,13 +243,11 @@ class MagneticField:
     def draw(self, surface: pygame.surface.Surface):
         color = None
         lcolor = None
-        a = 40
+        a = 60
         if self.pole == "+":
-            color = pygame.Color(0, 0, 255, a=a)
-            lcolor = pygame.Color(30, 30, 255, a=a)
+            color = (0, 0, 255, a)
         else:
-            color = pygame.Color(255, 0, 0, a=a)
-            lcolor = pygame.Color(255, 30, 30, a=a)
+            color = (255, 0, 0, a)
 
         interval = 16
         timescale = 20
@@ -253,6 +255,7 @@ class MagneticField:
         while r < self.radius:
             pygame.draw.circle(surface, color, self.pos.tuple(), r, width=12)
             #pygame.draw.circle(surface, lcolor, self.pos.tuple(), r+8, width=8)
+            #draw_circle_alpha(surface, color, self.pos.tuple(), r)
             r += interval
     
 
@@ -267,10 +270,9 @@ class Enemy(Actor):
         self.pole = "+"
 
         self.friction = .95
-        self.gravity = 1
 
         self.radius = 32
-
+        self.is_damaging = False
 
     def update(self):
         super().update()
@@ -311,6 +313,7 @@ class Enemy(Actor):
         else:
             # If stuckness has just been deactivated, launch 
             if old_stuck:
+                self.is_damaging = True
                 self.vel = player.dir + (Vect2(random.random(),random.random())*.5) * 20
                 player.vel -= player.dir * 10
     
@@ -322,8 +325,9 @@ class Enemy(Actor):
                     self.collision_reaction(actor)
 
     def collision_reaction(self, actor):
+        hit_by_damaging_enemy = not self.is_damaging and actor.is_damaging
         are_not_stuck = not actor.is_stuck and not self.is_stuck
-        if actor.vel.norm() > 30 and are_not_stuck:
+        if hit_by_damaging_enemy and are_not_stuck:
             self.is_deleted = True
             actor.is_deleted = True
         
@@ -331,6 +335,9 @@ class Enemy(Actor):
         diff = (actor.pos - self.pos).normalized()
         self.vel += -diff * 3
         actor.vel += diff * 3
+    
+    def on_collision(self):
+        self.is_damaging = False
 
 
 class Game:
