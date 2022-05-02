@@ -52,7 +52,7 @@ class Colors:
     RED = pygame.Color(255, 0, 0)
     GREEN = pygame.Color(0, 255, 0)
     BLUE = pygame.Color(0, 0, 255)
-    BG = pygame.Color(200, 200, 200)
+    BG = pygame.Color(255, 255, 255)
 
 
 class Fonts:
@@ -218,7 +218,7 @@ class MagneticField:
         self.radius = radius
         self.is_magnetic = False
         self.pole = pole
-
+        
         self.is_deleted = False
 
     def update(self):
@@ -231,11 +231,19 @@ class MagneticField:
                                 (self.pole != actor.pole) * 2 - 1)
 
     def draw(self, surface: pygame.surface.Surface):
+        color = None
         if self.pole == "+":
-            color = Colors.BLUE
+            color = pygame.Color(0, 0, 255)
         else:
-            color = Colors.RED
-        pygame.draw.circle(surface, color, self.pos.tuple(), self.radius)
+            color = pygame.Color(255, 0, 0)
+        color.a = 0
+
+        interval = 16
+        timescale = 20
+        r = (time.time() * timescale) % interval
+        while r < self.radius:
+            r += interval
+            pygame.draw.circle(surface, color, self.pos.tuple(), r, width=2)
     
 
 
@@ -373,8 +381,8 @@ class Game:
 
 
 class Globals:
-    window_width = int(1366 * 1.25)
-    window_height = int(768 * 1.25)
+    window_width = int(1366 * 0.8)
+    window_height = int(768 * 0.8)
 
     GAME = Game(window_width, window_height)
     FPS = 60
