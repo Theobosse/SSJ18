@@ -116,8 +116,10 @@ class Actor(Sprite):
                 self.state = "Grounded"
 
     def draw(self, screen: pygame.surface.Surface):
+
         image = pygame.transform.flip(self.image, self.flip_x, False)
-        screen.blit(image, self.pos.tuple())
+        screen.blit(image, (self.pos).tuple())
+        pygame.draw.circle(screen, Colors.GREEN, self.pos.tuple(), 1)
 
 
 class Player(Actor):
@@ -136,7 +138,7 @@ class Player(Actor):
         self.is_magnetic = True
         self.is_active = False
 
-        self.magneticField = MagneticField(x, y, 3, self.pole, 400)
+        self.magneticField = MagneticField(x, y, 5, self.pole, 400)
         Globals.GAME.new_actor(self.magneticField)
 
         self.flip_x = False
@@ -260,12 +262,12 @@ class Enemy(Actor):
     def do_magnetism(self):
         player = Globals.GAME.player
 
-        if player.is_active:
-            # Attraction to player
-            diff = (player.pos - self.pos).normalized()
-            self.vel += diff * 3
-            # counter gravity
-            self.vel.y -= self.gravity
+        #if player.is_active:
+        #    # Attraction to player
+        #    diff = (player.pos - self.pos).normalized()
+        #    self.vel += diff * 3
+        #    # counter gravity
+        #    self.vel.y -= self.gravity
         
     def do_stuck(self):
         player = Globals.GAME.player
@@ -330,7 +332,7 @@ class Game:
             self.new_actor(MagneticField(300, 300, 3, "+", 100))
             self.new_actor(MagneticField(600, 200, 3, "-", 100))
             self.new_actor(MagneticField(800, 500, 3, "-", 100))
-            self.new_actor(MagneticField(1100, 0, 3, "+", 400))
+            self.new_actor(MagneticField(1100, self.window_height, 3, "+", 400))
             
             self.new_actor(self.player)
 
