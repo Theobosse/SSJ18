@@ -11,6 +11,12 @@ import time
 
 from vector import Vect2
 
+def draw_circle_alpha(surface, color, center, radius):
+    # https://stackoverflow.com/questions/6339057/draw-a-transparent-rectangles-and-polygons-in-pygame
+    target_rect = pygame.Rect(center, (0, 0)).inflate((radius * 2, radius * 2))
+    shape_surf = pygame.Surface(target_rect.size, pygame.SRCALPHA)
+    pygame.draw.circle(shape_surf, color, (radius, radius), radius)
+    surface.blit(shape_surf, target_rect)
 
 def keydown(*keys):
     pressed = pygame.key.get_pressed()
@@ -52,7 +58,7 @@ class Colors:
     RED = pygame.Color(255, 0, 0)
     GREEN = pygame.Color(0, 255, 0)
     BLUE = pygame.Color(0, 0, 255)
-    BG = pygame.Color(200, 200, 200)
+    BG = pygame.Color(255, 255, 255)
 
 
 class Fonts:
@@ -218,7 +224,7 @@ class MagneticField:
         self.radius = radius
         self.is_magnetic = False
         self.pole = pole
-
+        
         self.is_deleted = False
 
     def update(self):
@@ -231,22 +237,33 @@ class MagneticField:
                                 (self.pole == actor.pole) * 2 - 1)
 
     def draw(self, surface: pygame.surface.Surface):
+        color = None
+        lcolor = None
+        a = 40
         if self.pole == "+":
-            color = Colors.RED
+
+            color = pygame.Color(255, 0, 0, a=a)
         else:
-            color = Colors.BLUE
-        pygame.draw.circle(surface, color, self.pos.tuple(), self.radius)
+            color = pygame.Color( 0, 0, 255, a=a)
+
+        interval = 16
+        timescale = 20
+        r = (time.time() * timescale) % interval
+        while r < self.radius:
+            pygame.draw.circle(surface, color, self.pos.tuple(), r, width=12)
+            #pygame.draw.circle(surface, lcolor, self.pos.tuple(), r+8, width=8)
+            r += interval
     
 
 
 class Enemy(Actor):
-    def __init__(self, x=0, y=0, name:str='enemy'):
+    def __init__(self, x=0, y=0, name:str='enemy' , pole = "+"):
         super().__init__(image('can', (64, 64)), (x,y), (64, 64), name)
         self.type = "enemy"
         self.pos = Vect2(x,y)
         self.is_stuck = False
         self.is_magnetic = True
-        self.pole = "+"
+        self.pole = pole
         self.has_been_grabed = False
 
         self.friction = .95
