@@ -242,8 +242,8 @@ class MagneticField:
         timescale = 20
         r = (time.time() * timescale) % interval
         while r < self.radius:
-            r += interval
             pygame.draw.circle(surface, color, self.pos.tuple(), r, width=2)
+            r += interval
     
 
 
