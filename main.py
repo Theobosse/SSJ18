@@ -260,7 +260,7 @@ class MagneticField:
 
 
 class Enemy(Actor):
-    def __init__(self, x=0, y=0, name:str='enemy' , pole = "+"):
+    def __init__(self, x=0, y=0, pole = "n", name:str='enemy'):
         super().__init__(image('can', (64, 64)), (x,y), (64, 64), name)
         self.type = "enemy"
         self.pos = Vect2(x,y)
@@ -281,11 +281,20 @@ class Enemy(Actor):
         self.friction = .95
 
         self.radius = 32
+
+        if self.pole == "-":
+            self.image = image('can_blue', (64, 64))
+        elif self.pole == "+":
+            self.image = image('can_red', (64, 64))
+        elif self.pole == "n":
+            self.image = image('can_neutral', (64, 64)) 
+            self.is_magnetic = False
+
         self.is_damaging = False
+
 
     def update(self):
         super().update()
-        self.do_magnetism()
         self.do_stuck()
         self.enemy_collision()
         self.update_image()
@@ -296,15 +305,6 @@ class Enemy(Actor):
         if self.is_stuck:
             display_text(screen, "STUCK", self.pos)
 
-    def do_magnetism(self):
-        player = Globals.GAME.player
-
-        #if player.is_active:
-        #    # Attraction to player
-        #    diff = (player.pos - self.pos).normalized()
-        #    self.vel += diff * 3
-        #    # counter gravity
-        #    self.vel.y -= self.gravity
         
     def do_stuck(self):
         player = Globals.GAME.player
@@ -312,13 +312,13 @@ class Enemy(Actor):
         old_stuck = self.is_stuck
 
         # Stuck if player active and close enough
-        if player.pole != self.pole:
-            if dist < self.radius:
-                self.is_stuck = True
-                self.has_been_grabbed = True
-        else:
-            self.is_stuck = False
-            
+        if self.is_magnetic:
+            if player.pole != self.pole:
+                if dist < self.radius:
+                    self.is_stuck = True
+                    self.has_been_grabbed = True
+            else:
+                self.is_stuck = False     
 
         if self.is_stuck:
             self.pos = player.pos
@@ -365,6 +365,8 @@ class Enemy(Actor):
         self.image = images[state]
 
 
+
+
 class Game:
     def __init__(self, window_width, window_height):
 
@@ -383,14 +385,15 @@ class Game:
             self.new_wall(0-1000, 0, 1000, 3000, Colors.GREEN)
 
 
-            self.new_actor(MagneticField(self.window_width, self.window_height, 125, "+", 100))
-            self.new_actor(MagneticField(0, self.window_height, 125, "+", 100))
+            #self.new_actor(MagneticField(self.window_width, self.window_height, 125, "+", 100))
+            #self.new_actor(MagneticField(0, self.window_height, 125, "-", 100))
             
             for i in range(10):
                 x = random.randint(0, self.window_width)
                 y = random.randint(0, self.window_height)
-                self.new_actor(Enemy(x, y))
-                self.new_actor(Enemy(400, 50))
+                self.new_actor(Enemy(x, y,"+"))
+                self.new_actor(Enemy(x, y,"-"))
+                self.new_actor(Enemy(x, y,"n"))
 
             self.new_actor(self.player)
 
