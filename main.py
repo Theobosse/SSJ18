@@ -76,27 +76,27 @@ class Actor(Sprite):
         self.type = "undefined"
         self.pos = Vect2(*pos)
         self.vel = Vect2()
-        self.gravity = 2
         self.w = size[0]
         self.h = size[1]
         self.state = "Falling"
         self.flip_x = False
         self.friction = .90
+        self.weight = 1
 
         self.is_magnetic = False
 
         self.is_deleted = False
 
     def update(self):
-        if self.vel.norm() >= 100:
+        if self.vel.norm() >= 1000:
             self.vel = self.vel.normalized() * 100
         self.update_pos()
         self.collision()
         self.pos += self.vel
 
     def update_pos(self):
-        self.vel.y += self.gravity
-        self.vel.x *= self.friction
+        self.vel.y += Globals.GRAVITY*self.weight
+        self.vel *= self.friction
 
     def collision(self):
 
@@ -142,6 +142,7 @@ class Player(Actor):
         self.w = 64
         self.h = 64
         self.pole = "-"
+        self.weight = .25
 
         self.image_blue = image('magnet_blue', (64, 64))
         self.image_red = image('magnet_red', (64, 64))
@@ -155,7 +156,7 @@ class Player(Actor):
         self.flip_x = False
 
         self.speed = 1
-        self.jump_speed = 30
+        self.jump_speed = 40
         self.max_jump_nb = 3
         self.jump_nb = self.max_jump_nb
 
@@ -236,7 +237,7 @@ class MagneticField:
                 if actor.is_magnetic:
                     diff = (actor.pos - self.pos).normalized()
                     actor.vel += diff * self.strength * (
-                                (self.pole == actor.pole) * 2 - 1)
+                                (self.pole == actor.pole) * 2 - 1) * actor.weight
 
     def draw(self, surface: pygame.surface.Surface):
         color = None
@@ -249,12 +250,13 @@ class MagneticField:
 
         interval = 16
         timescale = 20
-        r = (time.time() * timescale) % interval
-        while r < self.radius:
-            pygame.draw.circle(surface, color, self.pos.tuple(), r, width=12)
-            #pygame.draw.circle(surface, lcolor, self.pos.tuple(), r+8, width=8)
-            #draw_circle_alpha(surface, color, self.pos.tuple(), r)
-            r += interval
+        pygame.draw.circle(surface, color, self.pos.tuple(), self.radius, width=9)
+        #r = (time.time() * timescale) % interval
+        #while r < self.radius:
+        #    pygame.draw.circle(surface, color, self.pos.tuple(), r, width=12)
+        #    #pygame.draw.circle(surface, lcolor, self.pos.tuple(), r+8, width=8)
+        #    #draw_circle_alpha(surface, color, self.pos.tuple(), r)
+        #    r += interval
     
 
 
@@ -297,6 +299,12 @@ class Enemy(Actor):
 
 
     def update(self):
+        if self.is_damaging:
+            self.weight = 0
+            self.friction = 1
+        else:
+            self.weight = 1
+            self.friction = .95
         super().update()
         self.do_stuck()
         self.enemy_collision()
@@ -313,7 +321,7 @@ class Enemy(Actor):
         player = Globals.GAME.player
         dist = self.pos.dist(player.pos)
         old_stuck = self.is_stuck
-
+    
         # Stuck if player active and close enough
         if self.is_magnetic:
             if player.pole != self.pole:
@@ -329,14 +337,14 @@ class Enemy(Actor):
             # If stuckness has just been deactivated, launch 
             if old_stuck:
                 self.is_damaging = True
-                self.vel = player.dir + (Vect2(random.random(),random.random())*.5) * 20
+                self.vel = player.dir + (Vect2(random.random(),random.random())*.25) * 30
                 player.vel -= player.dir * 10
     
     def enemy_collision(self):
         for actor in Globals.GAME.actors:
             if type(actor) == Enemy and actor != self:
                 dist = self.pos.dist(actor.pos)
-                if dist <= self.radius + actor.radius and not actor.is_stuck and not self.is_stuck:
+                if dist <= self.radius + actor.radius and not actor.is_stuck and not self.is_stuck and not self.is_damaging:
                     self.collision_reaction(actor)
 
     def collision_reaction(self, actor):
@@ -344,9 +352,11 @@ class Enemy(Actor):
         are_not_stuck = not actor.is_stuck and not self.is_stuck
         are_not_grabbed = not actor.has_been_grabbed and self.has_been_grabbed
         
-        if hit_by_damaging_enemy and are_not_stuck and are_not_grabbed:
+        if hit_by_damaging_enemy and are_not_stuck and not actor.is_deleted:#and are_not_grabbed:
             self.is_deleted = True
             actor.is_deleted = True
+            if self.pole == "n":
+                Globals.GAME.player.jump_nb = min(Globals.GAME.player.jump_nb+1,Globals.GAME.player.max_jump_nb)
         
         # Repulsion
         diff = (actor.pos - self.pos).normalized()
@@ -385,28 +395,36 @@ class Game:
         if Globals.frame == 1:
             self.player = Player()
 
-            self.new_wall((self.window_width-300)//2, self.window_height//3, 300, 100, Colors.GREEN)
+            #self.new_wall((self.window_width-300)//2, self.window_height//3, 300, 100, Colors.GREEN)
             self.new_wall(self.window_width, 0, 30, 10000, Colors.GREEN)
             self.new_wall(0, -100, self.window_width, 100, Colors.GREEN)
             self.new_wall(-100, 0, 100, self.window_height, Colors.GREEN)
             self.new_wall(0, self.window_height-10, self.window_width, 100, Colors.GREEN)
 
 
-            #self.new_actor(MagneticField(self.window_width, self.window_height, 125, "+", 100))
-            #self.new_actor(MagneticField(0, self.window_height, 125, "-", 100))
+            self.new_actor(MagneticField(self.window_width-200, self.window_height-200, 10, "+", 300))
+            self.new_actor(MagneticField(0+200, self.window_height-200, 10, "-", 300))
+
+            self.new_actor(MagneticField((self.window_width)//2, self.window_height//3, 10, "-", 200))
             
             for i in range(10):
                 x = random.randint(0, self.window_width)
                 y = random.randint(0, self.window_height)
-                self.new_actor(Enemy(x, y,"+"))
-                self.new_actor(Enemy(x, y,"-"))
-                self.new_actor(Enemy(x, y,"n"))
+                self.new_actor(Enemy(x, y,Globals.poles[random.randint(0,2)]))
+
 
             self.new_actor(self.player)
-
-        Globals.frame += 1
+        
         screen.fill(Colors.BG)
         screen.blit(Fonts.TITLE.render("Hello", True, Colors.BLUE), (10, 10))
+
+        if Globals.frame!=0:
+            while len(self.actors) <30:
+                x = random.randint(0, self.window_width)
+                y = random.randint(0, self.window_height)
+                self.new_actor(Enemy(x, y,Globals.poles[random.randint(0,2)]))
+
+
         for a in self.actors:
             a.update()
         for a in self.actors:
@@ -418,6 +436,7 @@ class Game:
         self.map.draw(screen)
         # Sprite(image())
         Globals.oldpressed = pygame.key.get_pressed()
+        Globals.frame += 1
 
     def new_actor(self, actor):
         self.actors.append(actor)
@@ -432,7 +451,7 @@ class Game:
 class Globals:
     window_width = int(1366 * 1)
     window_height = int(768 * 1)
-
+    poles = ["+","-","n"]
     GAME = Game(window_width, window_height)
     FPS = 60
     frame = 0
